@@ -1,0 +1,12 @@
+llm_url = "http://192.168.1.4:11434/v1"
+# api_key = "local"   # optional — most local servers ignore this, uncomment if yours needs it
+
+[planner]
+model = "qwen3:14b"
+temperature = 0.4
+num_ctx = 16384
+
+[architect]
+model = "qwen2.5:14b"
+temperature = 0.3
+num_ctx = 16384
