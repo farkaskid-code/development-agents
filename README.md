@@ -1,13 +1,51 @@
-# Local AI-Assisted Development Harnesses
+# development-agents
 
-Two standalone CLI tools implementing the Project Planner / Software Architect roles
-from the workflow doc. Zero external dependencies — stdlib Python 3.10+ only, so
-nothing to `pip install`. Talks to any local OpenAI-compatible server (Ollama,
-llama.cpp server, vLLM, LM Studio).
+Two local, LLM-backed CLI tools — a **Project Planner** and a **Software Architect** —
+implementing a learning-first development workflow: they help you scope and understand
+a personal software project one task at a time, without ever writing implementation
+code for you. See [`workflow.md`](./workflow.md) for the full reasoning behind how these
+two roles work and why they're split the way they are. This README covers installing
+and running the tools themselves.
 
-## Setup
+Both tools talk to any local, OpenAI-compatible chat completions server that supports
+tool/function calling — Ollama, llama.cpp's server, vLLM, and LM Studio all qualify.
 
-Edit `config.toml` (lives next to the entrypoint scripts):
+## Requirements
+
+- Python 3.11+ (uses `tomllib` from the standard library)
+- [`uv`](https://docs.astral.sh/uv/)
+- `git`
+- A local LLM server exposing an OpenAI-compatible `/v1/chat/completions` endpoint, with
+  a model that supports tool/function calling
+- `less` on PATH (optional — used to page long responses; the tools fall back to plain
+  output if it isn't found)
+
+## Install
+
+From inside this repository:
+
+```bash
+uv tool install --editable .
+```
+
+**Use `--editable`, not a plain install.** The tools locate `config.toml` relative to
+their own source location on disk. An editable install keeps that pointing at this
+repository's actual `src/development_agents/config.toml`; a normal (non-editable)
+install copies the package into an isolated environment where that file generally won't
+exist, since it's meant to be edited locally rather than bundled as shipped package
+data.
+
+This puts `project-planner` and `software-architect` on your PATH, runnable from
+anywhere — which matters, since you'll typically invoke them from wherever you keep your
+actual projects, not from inside this repository.
+
+*(If your `pyproject.toml` doesn't declare these as console script entry points yet, add
+them under `[project.scripts]` pointing at `development_agents.project_planner:main` and
+`development_agents.software_architect:main` respectively.)*
+
+## Configure
+
+Edit `src/development_agents/config.toml`:
 
 ```toml
 llm_url = "http://localhost:11434/v1"
@@ -24,70 +62,70 @@ temperature = 0.3
 num_ctx = 16384
 ```
 
-`llm_url` is shared; `[planner]` and `[architect]` are separate sections specifically so
-you can run different models or sampling settings per role while experimenting. Both
-models must support tool/function calling in their chat template.
-
-Requires `git` and `uv` on PATH (`uv` is used by the bootstrap step to `uv init` the
-project — swap `harness/bootstrap.py` if you'd rather use something else).
+`llm_url` is shared between both tools. `[planner]` and `[architect]` are separate
+sections specifically so you can run different models or sampling settings per role.
+Both models need to support tool/function calling in their chat template — if a tool
+call never fires (a project never gets created, a task never gets started), that's
+usually a model capability issue rather than a bug in these scripts.
 
 ## Usage
 
 ```bash
-# One-time, per new project. Run from wherever you keep projects.
-python3 project_planner.py dino-game
+# One-time, when starting a new project. Run from wherever you keep your projects —
+# this creates ./dino-game relative to your current directory.
+project-planner dino-game
 
-# Every session after that.
-python3 software_architect.py dino-game
+# Every session after that, from the same location.
+software-architect dino-game
 ```
 
-Both assume the project lives at `./{project-name}` relative to your current directory.
+Each command assumes the project name resolves relative to your current working
+directory. See `workflow.md` for what actually happens during each session and what
+gets created inside the target project's directory.
 
-## What's here
+## Project Structure (this repository)
 
 ```
-harness/
-  config.py        # env-var based LLM connection settings
-  llm_client.py     # raw HTTP client for /v1/chat/completions (stdlib only)
-  chat_loop.py       # generic tool-calling REPL loop, shared by both scripts
-  fs_tools.py          # ScopedFS — hard-enforced read/write boundary to project/
-  git_tools.py           # init/commit + history reconstruction & search
-  bootstrap.py             # the planner's one hardcoded, non-parameterized action
-  task_tools.py              # state detection + start_task for the architect
-project_planner.py     # entrypoint: project-planner {project-name}
-software_architect.py   # entrypoint: software-architect {project-name}
-prompts/
-  planner_system_prompt.md
-  architect_system_prompt.md
+development-agents/
+  pyproject.toml
+  pyrightconfig.json
+  uv.lock
+  README.md
+  workflow.md
+  src/
+    development_agents/
+      config.toml                     # edit this — see Configure, above
+      py.typed
+      __init__.py
+      project_planner.py               # entrypoint: project-planner
+      software_architect.py             # entrypoint: software-architect
+      harness/
+        __init__.py
+        bootstrap.py                    # the Planner's one hardcoded action
+        chat_loop.py                     # shared interactive tool-calling loop (rich-based UI)
+        config.py                         # reads config.toml
+        fs_tools.py                        # scoped filesystem access (project/ only)
+        git_tools.py                        # commit/history helpers
+        llm_client.py                        # stdlib HTTP client for the LLM server
+        task_tools.py                          # task state detection + task creation
+      prompts/
+        planner_system_prompt.md
+        architect_system_prompt.md
 ```
 
-## Design notes
+Do not confuse this structure with the structure of a project you *build* using these
+tools (e.g. `dino-game/`) — that's a separate directory elsewhere on disk, created by
+`project-planner`, and is covered in `workflow.md`.
 
-- **The Architect can never reach `src/`.** `ScopedFS` resolves every path against its
-  root and rejects anything that escapes it — traversal, absolute paths, whatever. This
-  is enforced by `fs_tools.py`'s code, not by prompt instruction, so it holds even if a
-  model ignores its system prompt.
-- **No shell access for the model.** The only mechanical, filesystem/git-touching
-  actions (`bootstrap_project`, `start_task`) are fixed Python functions with narrow,
-  typed parameters — the model can't ask them to do anything beyond what they're
-  written to do.
-- **State is detected by the harness, not inferred by the model.** `task_tools.detect_state`
-  runs before the chat loop starts; the model is just told the answer.
-- **There is no devlog file.** `git log -p` against `task.md`/`report.md`, interleaved
-  by commit order, is the devlog. This depends on you squash-merging each task branch
-  into exactly one commit on `main` — see the workflow doc for why that discipline
-  matters here.
-- **No date-guessing.** Every timestamp comes from real git commit metadata instead of
-  the model's (often stale) sense of "today."
+## Notes and Known Limitations
 
-## Known rough edges to watch for once you're using this for real
-
-- `num_ctx` (from config.toml) is passed via an `options` field aimed at Ollama's API
-  shape — if you're running a different backend, check whether it expects
-  context-length configuration differently (some servers set this at model-load time
-  instead of per-request).
-- Tool-calling quality varies a lot across local models, especially <14B ones. If the
-  model hallucinates tool arguments or doesn't call tools when it should, that's a model
-  capability issue, not a harness bug — worth testing a couple of candidates.
-- No conversation persistence between runs — closing the terminal loses that session's
-  chat. Durable state is still only what's been written to `project/` and committed.
+- There is no conversation persistence between runs — closing the terminal ends that
+  session's chat. Durable state is only whatever has been written under the target
+  project's `project/` directory and committed to git.
+- Tool-calling reliability varies significantly across local models, especially below
+  ~14B parameters. If a session talks normally but never seems to call its tools (no
+  project gets created, no task gets started), try a different model before assuming
+  the harness is broken.
+- The Architect's read/write access is scoped in code to the target project's `project/`
+  directory — it cannot reach `src/` even if asked. This is enforced by
+  `harness/fs_tools.py`, not by the system prompt alone.
