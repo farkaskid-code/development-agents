@@ -1,5 +1,5 @@
 [project]
-name = "workflow-harness"
+name = "development-agents"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -15,7 +15,7 @@ dependencies = [
 requires = ["uv_build>=0.12.9,<0.13.0"]
 build-backend = "uv_build"
 
-[tool.uv.workspace]
-members = [
-    "dino-runner",
-]
+[project.scripts]
+project-planner = "development_agents.project_planner:main"
+software-architect = "development_agents.software_architect:main"
+

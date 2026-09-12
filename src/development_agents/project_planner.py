@@ -10,9 +10,9 @@ Assumes cwd: the project is created at ./{project-name}.
 import sys
 from pathlib import Path
 
-from harness.bootstrap import bootstrap_project
-from harness.chat_loop import ToolSpec, run_chat_loop, console
-from harness.config import Config
+from .harness.bootstrap import bootstrap_project
+from .harness.chat_loop import ToolSpec, run_chat_loop, console
+from .harness.config import Config
 
 PROMPT_PATH = Path(__file__).parent / "prompts" / "planner_system_prompt.md"
 
