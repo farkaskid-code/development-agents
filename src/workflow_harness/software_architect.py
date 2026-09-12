@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 from harness import git_tools, task_tools
-from harness.chat_loop import ToolSpec, run_chat_loop
+from harness.chat_loop import ToolSpec, run_chat_loop, console
 from harness.config import Config
 from harness.fs_tools import PathEscapeError, ScopedFS
 
@@ -56,16 +56,20 @@ def main() -> None:
     else:
         task_content = scoped_fs.read_file("task.md")
         report_content = scoped_fs.read_file("report.md")
-        context_messages.append({
-            "role": "system",
-            "content": (
-                f"Current state: {state}\n\n"
-                f"Current task.md content:\n\n{task_content}\n\n"
-                f"Current report.md content:\n\n{report_content}"
-            ),
-        })
+        context_messages.append(
+            {
+                "role": "system",
+                "content": (
+                    f"Current state: {state}\n\n"
+                    f"Current task.md content:\n\n{task_content}\n\n"
+                    f"Current report.md content:\n\n{report_content}"
+                ),
+            }
+        )
         if state == "in_progress":
-            opening_line = "Software Architect — current task is still in progress. Welcome back."
+            opening_line = (
+                "Software Architect — current task is still in progress. Welcome back."
+            )
         else:
             opening_line = "Software Architect — report.md looks filled in. Ready to review when you are."
 
@@ -86,7 +90,7 @@ def main() -> None:
 
     def _start_task(task_name: str, task_md_content: str) -> dict:
         result = task_tools.start_task(project_dir, task_name, task_md_content)
-        print(f"\n[{result['message']}]\n")
+        console.print(f"\n{result['message']}\n", style="bold green", markup=False)
         return result
 
     def _get_recent_history(n: int = 5) -> dict:
@@ -132,8 +136,14 @@ def main() -> None:
             parameters={
                 "type": "object",
                 "properties": {
-                    "task_name": {"type": "string", "description": "Short task name, e.g. 'jump-physics'."},
-                    "task_md_content": {"type": "string", "description": "Complete task.md content."},
+                    "task_name": {
+                        "type": "string",
+                        "description": "Short task name, e.g. 'jump-physics'.",
+                    },
+                    "task_md_content": {
+                        "type": "string",
+                        "description": "Complete task.md content.",
+                    },
                 },
                 "required": ["task_name", "task_md_content"],
             },
@@ -144,7 +154,12 @@ def main() -> None:
             description="Returns the last n tasks' worth of task.md/report.md git history, chronological.",
             parameters={
                 "type": "object",
-                "properties": {"n": {"type": "integer", "description": "Number of recent tasks. Default 5."}},
+                "properties": {
+                    "n": {
+                        "type": "integer",
+                        "description": "Number of recent tasks. Default 5.",
+                    }
+                },
                 "required": [],
             },
             fn=_get_recent_history,
@@ -167,6 +182,7 @@ def main() -> None:
         tools=tools,
         context_messages=context_messages,
         opening_line=opening_line,
+        assistant_label="Architect",
     )
 
 

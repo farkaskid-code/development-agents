@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from harness.bootstrap import bootstrap_project
-from harness.chat_loop import ToolSpec, run_chat_loop
+from harness.chat_loop import ToolSpec, run_chat_loop, console
 from harness.config import Config
 
 PROMPT_PATH = Path(__file__).parent / "prompts" / "planner_system_prompt.md"
@@ -38,7 +38,7 @@ def main() -> None:
 
     def _bootstrap(design_md_content: str) -> dict:
         result = bootstrap_project(project_dir, design_md_content)
-        print(f"\n[{result['message']}]\n")
+        console.print(f"\n{result['message']}\n", style="bold green", markup=False)
         return result
 
     tools = {
@@ -69,6 +69,7 @@ def main() -> None:
         system_prompt=system_prompt,
         tools=tools,
         opening_line=f"Project Planner — new project '{project_name}'. What are you thinking of building?",
+        assistant_label="Planner",
     )
 
 
