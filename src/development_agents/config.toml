@@ -7,6 +7,6 @@ temperature = 0.4
 num_ctx = 16384
 
 [architect]
-model = "qwen2.5:14b"
+model = "qwen3:14b"
 temperature = 0.3
 num_ctx = 16384
