@@ -1,4 +1,7 @@
 {
+  "importFormat": "module",
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
   "venvPath": ".",
   "venv": ".venv"
 }

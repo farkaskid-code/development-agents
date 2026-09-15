@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 software-architect {project-name}
 
@@ -13,7 +12,7 @@ import sys
 from pathlib import Path
 
 from .harness import git_tools, task_tools
-from .harness.chat_loop import ToolSpec, run_chat_loop, console
+from .harness.chat_loop import ToolSpec, console, run_chat_loop
 from .harness.config import Config
 from .harness.fs_tools import PathEscapeError, ScopedFS
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 project-planner {project-name}
 
@@ -11,7 +10,7 @@ import sys
 from pathlib import Path
 
 from .harness.bootstrap import bootstrap_project
-from .harness.chat_loop import ToolSpec, run_chat_loop, console
+from .harness.chat_loop import ToolSpec, console, run_chat_loop
 from .harness.config import Config
 
 PROMPT_PATH = Path(__file__).parent / "prompts" / "planner_system_prompt.md"

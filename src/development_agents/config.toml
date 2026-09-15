@@ -1,4 +1,4 @@
-llm_url = "http://192.168.1.4:11434/v1"
+llm_url = "http://192.168.137.1:11434/v1"
 # api_key = "local"   # optional — most local servers ignore this, uncomment if yours needs it
 
 [planner]
