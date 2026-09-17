@@ -36,8 +36,8 @@ def main() -> None:
     config = Config.load("planner")
     system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
 
-    def _bootstrap(design_md_content: str) -> dict:
-        result = bootstrap_project(project_dir, design_md_content)
+    def _bootstrap(design_md_content: str, readme_content: str) -> dict:
+        result = bootstrap_project(project_dir, design_md_content, readme_content)
         console.print(f"\n{result['message']}\n", style="bold green", markup=False)
         return result
 
@@ -67,9 +67,13 @@ def main() -> None:
                     "design_md_content": {
                         "type": "string",
                         "description": "The complete content for design.md, following the required format.",
-                    }
+                    },
+                    "readme_content": {
+                        "type": "string",
+                        "description": "A short, human-facing README for the project repo itself.",
+                    },
                 },
-                "required": ["design_md_content"],
+                "required": ["design_md_content", "readme_content"],
             },
             fn=_bootstrap,
             ends_session=True,

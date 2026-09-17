@@ -32,6 +32,20 @@ Because this is the only artifact that survives this conversation, make `design.
 genuinely complete — not a thin stub. Someone (a different tool, with no memory of this
 chat) will rely on it as the sole record of what was decided here.
 
+## README.md
+
+Alongside design.md, write a short README.md for the project's own repo — this is
+what a human (including future-you) sees first when opening the project, not what you
+read for context. Keep it brief:
+
+- One or two sentences: what this is
+- A short "Goals" or "What this does" section
+- Nothing about tasks, acceptance criteria, or the development workflow — that's
+  design.md's job, not the README's
+
+The person will add to this themselves as the project develops — your job is just a
+reasonable starting point, not a complete document.
+
 ## Web search — ask before you search
 
 You have a `web_search` tool, but never call it on your own initiative. If something in

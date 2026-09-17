@@ -12,15 +12,23 @@ from pathlib import Path
 from . import git_tools
 
 
-def bootstrap_project(project_dir: Path, design_md_content: str) -> dict:
+def bootstrap_project(
+    project_dir: Path, design_md_content: str, readme_content: str
+) -> dict:
     project_dir.mkdir(parents=True, exist_ok=True)
 
     if not (project_dir / "pyproject.toml").exists():
         result = subprocess.run(
-            ["uv", "init", "."], cwd=project_dir, capture_output=True, text=True,
+            ["uv", "init", "."],
+            cwd=project_dir,
+            capture_output=True,
+            text=True,
+            check=False,
         )
         if result.returncode != 0:
             raise RuntimeError(f"uv init failed: {result.stderr}")
+
+    (project_dir / "README.md").write_text(readme_content, encoding="utf-8")
 
     project_subdir = project_dir / "project"
     project_subdir.mkdir(exist_ok=True)
