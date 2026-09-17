@@ -41,6 +41,7 @@ class Config:
     model: str
     temperature: float
     num_ctx: int
+    tavily_api_key: str | None = None
 
     @classmethod
     def load(cls, section: str) -> "Config":
@@ -62,7 +63,10 @@ class Config:
 
         base_url = data.get("llm_url")
         if not base_url:
-            print(f"Error: '{CONFIG_PATH}' is missing top-level 'llm_url'.", file=sys.stderr)
+            print(
+                f"Error: '{CONFIG_PATH}' is missing top-level 'llm_url'.",
+                file=sys.stderr,
+            )
             sys.exit(1)
         base_url = base_url.rstrip("/")
 
@@ -79,11 +83,21 @@ class Config:
         section_data = data[section]
         model = section_data.get("model")
         if not model:
-            print(f"Error: [{section}] section in '{CONFIG_PATH}' is missing 'model'.", file=sys.stderr)
+            print(
+                f"Error: [{section}] section in '{CONFIG_PATH}' is missing 'model'.",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         temperature = float(section_data.get("temperature", 0.4))
         num_ctx = int(section_data.get("num_ctx", 16384))
+        tavily_api_key = data.get("tavily_api_key")
 
-        return cls(base_url=base_url, api_key=api_key, model=model,
-                    temperature=temperature, num_ctx=num_ctx)
+        return cls(
+            base_url=base_url,
+            api_key=api_key,
+            model=model,
+            temperature=temperature,
+            num_ctx=num_ctx,
+            tavily_api_key=tavily_api_key,
+        )

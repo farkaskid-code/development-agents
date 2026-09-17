@@ -12,6 +12,7 @@ from pathlib import Path
 from .harness.bootstrap import bootstrap_project
 from .harness.chat_loop import ToolSpec, console, run_chat_loop
 from .harness.config import Config
+from .harness.web_search import SearchError, search
 
 PROMPT_PATH = Path(__file__).parent / "prompts" / "planner_system_prompt.md"
 
@@ -40,6 +41,18 @@ def main() -> None:
         console.print(f"\n{result['message']}\n", style="bold green", markup=False)
         return result
 
+    def _web_search(query: str) -> dict:
+        if not config.tavily_api_key:
+            return {
+                "status": "error",
+                "message": "No tavily_api_key configured in config.toml.",
+            }
+        try:
+            results = search(config.tavily_api_key, query, max_results=5)
+            return {"status": "ok", "results": results}
+        except SearchError as e:
+            return {"status": "error", "message": str(e)}
+
     tools = {
         "bootstrap_project": ToolSpec(
             name="bootstrap_project",
@@ -60,7 +73,21 @@ def main() -> None:
             },
             fn=_bootstrap,
             ends_session=True,
-        )
+        ),
+        "web_search": ToolSpec(
+            name="web_search",
+            description=(
+                "Search the web for current information about something unfamiliar. "
+                "Only call this after the person has explicitly confirmed they want you "
+                "to search — never on your own initiative."
+            ),
+            parameters={
+                "type": "object",
+                "properties": {"query": {"type": "string"}},
+                "required": ["query"],
+            },
+            fn=_web_search,
+        ),
     }
 
     run_chat_loop(
