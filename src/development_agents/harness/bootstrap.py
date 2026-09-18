@@ -36,6 +36,7 @@ def bootstrap_project(
 
     git_tools.init_repo(project_dir)
     git_tools.commit_all(project_dir, "Bootstrap: initial design.md")
+    git_tools.setup_dev_branch(cwd=project_dir)
 
     return {
         "status": "ok",

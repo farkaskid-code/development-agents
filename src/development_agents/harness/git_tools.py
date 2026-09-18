@@ -15,7 +15,7 @@ TRACKED_PATHS = ["project/task.md", "project/report.md"]
 
 def _run(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["git", *args], cwd=cwd, capture_output=True, text=True,
+        ["git", *args], cwd=cwd, capture_output=True, text=True, check=False
     )
 
 
@@ -24,6 +24,18 @@ def init_repo(cwd: Path) -> None:
         result = _run(["init"], cwd=cwd)
         if result.returncode != 0:
             raise RuntimeError(f"git init failed: {result.stderr}")
+
+
+def setup_dev_branch(cwd: Path) -> None:
+    rename_main_branch = _run(["branch", "-m", "main"], cwd=cwd)
+    if rename_main_branch.returncode != 0:
+        raise RuntimeError(
+            f"failed to rename main branch to 'main': {rename_main_branch.stderr}"
+        )
+
+    create_dev_branch = _run(["checkout", "-b", "dev"], cwd=cwd)
+    if create_dev_branch.returncode != 0:
+        raise RuntimeError(f"failed to create dev branch: {create_dev_branch.stderr}")
 
 
 def commit_all(cwd: Path, message: str) -> None:
